@@ -12,8 +12,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 import joblib
 
-df_students = pd.read_csv("Data/students_clean.csv")
-df_employee = pd.read_csv("Data/employee_clean.csv")
+df_students = pd.read_csv("data/students_clean.csv")
+df_employee = pd.read_csv("data/employee_clean.csv")
 
 
 def logistic_regression(df, label):
@@ -93,8 +93,8 @@ def logistic_regression(df, label):
     print(classification_report(y_test, y_pred))
 
     # sauvegarde du modèle
-    joblib.dump(best_pipeline, f'App_train_model/lr_{label}.joblib')
-    print(f"Sauvegarde sous : App_train_model/lr_{label}.joblib")
+    joblib.dump(best_pipeline, f'models/lr_{label}.joblib')
+    print(f"Sauvegarde sous : models/lr_{label}.joblib")
 
 
 logistic_regression(df_students, "students")
