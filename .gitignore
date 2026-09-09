@@ -1,0 +1,23 @@
+# Environnement virtuel
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets Streamlit (si tu en ajoutes plus tard : clés API, etc.)
+.streamlit/secrets.toml
+.env
+
+# OS / éditeurs
+.DS_Store
+.vscode/
+
+# Fichiers temporaires de travail
+requirements_brut.txt
