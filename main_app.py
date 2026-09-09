@@ -8,7 +8,7 @@ profil = st.selectbox("Tu es :", ["Étudiant", "Employé"])
 
 if profil == "Étudiant":
     #pipeline = lr student + scaler
-    pipeline = joblib.load('App_train_model/lr_students.joblib')
+    pipeline = joblib.load('models/lr_students.joblib')
     
     age = st.slider("Quel est ton âge ?", 15, 35)
     academic_pressure = st.slider("Pression académique (1=faible, 5=élevée)", 1, 5)
@@ -35,7 +35,7 @@ if profil == "Étudiant":
 
 else:
     #pipeline = lr employee + scaler
-    pipeline = joblib.load('App_train_model/lr_employee.joblib')
+    pipeline = joblib.load('models/lr_employee.joblib')
 
     age = st.slider("Quel est ton âge ?", 18, 60)
     profession = st.selectbox("Profession", ["Education", "Santé", "Tech", "Business", "Droit", "Service"])
