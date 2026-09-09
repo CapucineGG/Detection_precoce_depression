@@ -21,3 +21,5 @@ __pycache__/
 
 # Fichiers temporaires de travail
 requirements_brut.txt
+Data/students_clean.csv
+Data/employee_clean.csv
