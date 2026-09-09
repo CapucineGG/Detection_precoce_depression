@@ -20,9 +20,7 @@ from sklearn.cluster import KMeans
 import joblib
 
 #import file depression
-df = pd.read_csv(r"C:\Users\capuc\Desktop\Inge_2\Machine_Learning\Projet\projet_ML_depression_Capu\Data\final_depression_dataset_1.csv")
-#'/Users/julietterey/Downloads/IA/MachineLearning/ProjetDepression/projet_ML_depression-main/Data/final_depression_dataset_1.csv'
-
+df = pd.read_csv("Data/final_depression_dataset_1.csv")
 
 #Exploration initiale :
 #type de chaque colonne
