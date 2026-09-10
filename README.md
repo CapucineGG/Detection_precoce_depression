@@ -17,8 +17,8 @@ Explorer, nettoyer et modéliser un jeu de données comportementales pour prédi
 ## Installation
 
 ```bash
-git clone https://github.com/CapucineGG/early-depression-detection.git
-cd early-depression-detection
+git clone https://github.com/CapucineGG/Detection_precoce_depression.git
+cd Detection_precoce_depression
 python3 -m venv venv
 source venv/bin/activate  # sur Windows : venv\Scripts\activate
 pip install -r requirements.txt
@@ -28,9 +28,13 @@ pip install -r requirements.txt
 
 ### Lancer l'application
 
+Depuis le dossier du projet, avec le venv activé (`source venv/bin/activate`, à refaire à chaque nouvelle session de terminal) :
+
 ```bash
 streamlit run main_app.py
 ```
+
+Ça ouvre automatiquement un onglet dans le navigateur par défaut (sinon l'URL, en général `http://localhost:8501`, s'affiche directement dans le terminal). Pour arrêter l'application, `Ctrl+C` dans le terminal.
 
 ### Régénérer les modèles depuis zéro (optionnel)
 
