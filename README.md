@@ -61,20 +61,24 @@ early-depression-detection/
 
 ## Démarche
 
-1. **Exploration et nettoyage** (`01_exploration_nettoyage.ipynb`) : traitement des valeurs manquantes, correction des catégories, séparation du dataset en deux populations (étudiants / employés), qui n'ont pas les mêmes variables pertinentes.
+1. **Exploration et nettoyage** (`01_exploration_nettoyage.ipynb`) : traitement des valeurs manquantes, correction des catégories, **visualisations comparant les deux populations et leurs features** (taux de dépression, pression/satisfaction, habitudes, corrélations), séparation du dataset en deux populations (étudiants / employés), qui n'ont pas les mêmes variables pertinentes.
 2. **Comparaison de modèles** (`02_comparaison_modeles.ipynb`) : test de 6 modèles supervisés (régression logistique, random forest, arbre de décision, k-NN, AdaBoost, gradient boosting) + un essai non supervisé (KMeans). La régression logistique s'est démarquée comme le modèle le plus performant.
-3. **Modèle final** (`03_entrainement_modele_final.py`) : sélection des features les plus corrélées, recherche des meilleurs hyperparamètres par GridSearchCV, évaluation (matrice de confusion, courbe ROC), sauvegarde du modèle.
+3. **Modèle final** (`03_entrainement_modele_final.py`) : sélection des features les plus corrélées (calculée uniquement sur le jeu d'entraînement, pour ne pas biaiser l'évaluation), recherche des meilleurs hyperparamètres par GridSearchCV, diagnostic de sur-apprentissage (AUC train vs test, courbe d'apprentissage), évaluation (matrice de confusion, courbe ROC), sauvegarde du modèle.
 
 ## Résultats
 
-<!-- Remplace ce tableau par les vraies métriques affichées à la fin de l'exécution de 03_entrainement_modele_final.py (classification_report) -->
-
 | Population | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| Étudiants | à compléter | à compléter | à compléter | à compléter |
-| Employés | à compléter | à compléter | à compléter | à compléter |
+| Étudiants | 0.93 | 0.93 | 0.93 | 0.93 |
+| Employés | 0.99 | 0.99 | 0.99 | 0.99 |
+
+*(moyennes pondérées du `classification_report` sur le jeu de test ; recall du modèle retenu par GridSearchCV : 0.94 pour les étudiants, 0.91 pour les employés)*
 
 Le scoring a été optimisé sur le **recall** plutôt que l'accuracy : dans un contexte de santé, un faux positif (personne non déprimée signalée à tort) est préférable à un faux négatif (personne déprimée non détectée).
+
+### À propos de l'AUC très élevé (~0.99)
+
+Un tel score peut faire soupçonner du sur-apprentissage. Le script compare maintenant l'AUC sur le train, le test et en validation croisée : les trois sont très proches (écart < 0.01, voir la courbe d'apprentissage générée par `03_entrainement_modele_final.py`), et le score reste tout aussi élevé avec une régularisation forte ou avec un modèle différent (random forest peu profond). Ce n'est donc pas un sur-apprentissage classique (le modèle ne « mémorise » pas le train). L'explication la plus probable est que ce jeu de données (réponses à un sondage volontaire, pas un diagnostic clinique) sépare très nettement les deux classes à partir de quelques variables combinées (pression académique/professionnelle, pensées suicidaires, stress financier...). Les métriques ne doivent donc pas être lues comme une performance clinique réelle — voir aussi la section Limites ci-dessous.
 
 ## Données
 
@@ -87,8 +91,9 @@ Note : les colonnes `Name` et `City` du dataset original ont été retirées dè
 ## Limites et axes d'amélioration
 
 - Les prédictions dépendent entièrement de la qualité et de la représentativité du dataset d'entraînement
+- Le dataset est un sondage déclaratif (pas de diagnostic clinique), et sépare les deux classes de façon très nette sur quelques variables combinées : les métriques (AUC ~0.99) sont donc probablement optimistes par rapport à un cas réel, voir la section Résultats
 - Le clustering non supervisé (KMeans) ne s'est pas avéré exploitable pour ce problème
-- Piste future : tester d'autres modèles sur le pipeline final (pas seulement la régression logistique), ou du rééquilibrage de classes si le dataset est déséquilibré
+- Piste future : tester d'autres modèles sur le pipeline final (pas seulement la régression logistique), ou du rééquilibrage de classes si le dataset est déséquilibré (le sous-groupe employés n'a que ~10% de cas positifs)
 
 ## Licence
 

@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold, learning_curve
 from sklearn.metrics import (confusion_matrix, ConfusionMatrixDisplay,
-                             classification_report, roc_curve, auc)
+                             classification_report, roc_curve, auc, roc_auc_score)
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -17,29 +17,34 @@ df_employee = pd.read_csv("data/employee_clean.csv")
 
 
 def logistic_regression(df, label):
-    # matrice de corrélation
-    corr_matrix = df.corr().round(2)
+    X_full = df.drop('Depression', axis=1)
+    y = df['Depression']
+
+    X_train_full, X_test_full, y_train, y_test = train_test_split(X_full, y, test_size=0.2, random_state=42, stratify=y)
+
+    # matrice de corrélation calculée uniquement sur le train
+    train_with_label = X_train_full.copy()
+    train_with_label['Depression'] = y_train
+    corr_matrix = train_with_label.corr().round(2)
     plt.figure(figsize=(12, 10))
     sns.heatmap(data=corr_matrix, annot=True)
+    plt.title(f"Corrélations (train uniquement) : {label}")
     plt.show()
 
-    # on garde les features corrélées à Depression (> 0.05)
+    # on garde les features corrélées à Depression (> 0.05), décidé sur le train
     corr_with_label = corr_matrix['Depression']
     selected_features = corr_with_label[abs(corr_with_label) > 0.05].drop('Depression')
     print(f'Features supprimés : {corr_with_label[abs(corr_with_label) <= 0.05]}')
     print(f'Features gardés : {corr_with_label[abs(corr_with_label) > 0.05]}')
 
-    X = df[selected_features.index]
-    y = df['Depression']
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    X_train = X_train_full[selected_features.index]
+    X_test = X_test_full[selected_features.index]
 
     # feature importance avec un random forest
     rf = RandomForestClassifier(random_state=42)
     rf.fit(X_train, y_train)
 
-    featureimpor = pd.DataFrame(rf.feature_importances_, index=X_train.columns,
-                                columns=["importance"]).sort_values("importance", ascending=False)
+    featureimpor = pd.DataFrame(rf.feature_importances_, index=X_train.columns, columns=["importance"]).sort_values("importance", ascending=False)
     plt.barh(featureimpor.index, featureimpor["importance"])
     plt.title(f'Feature Importance (Random Forest) : {label}')
     plt.show()
@@ -49,15 +54,16 @@ def logistic_regression(df, label):
         ('model', LogisticRegression(max_iter=5000))
     ])
 
-    # recherche des meilleurs hyperparamètres
+    # Recherche des meilleurs hyperparamètres.
     param_grid = {
-        'model__C': np.arange(0.01, 100, 0.1),
+        'model__C': np.logspace(-2, 2, 20),
         'model__penalty': ['l1', 'l2'],
         'model__solver': ['liblinear', 'saga']
     }
 
     # scoring='recall' car en santé un faux positif vaut mieux qu'un faux négatif
-    grid = GridSearchCV(pipe, param_grid, scoring='recall', cv=5)
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    grid = GridSearchCV(pipe, param_grid, scoring='recall', cv=cv)
     grid.fit(X_train, y_train)
 
     print(f'Meilleurs paramètres : {grid.best_params_}')
@@ -67,6 +73,37 @@ def logistic_regression(df, label):
 
     y_pred = best_pipeline.predict(X_test)
     y_proba = best_pipeline.predict_proba(X_test)[:, 1]
+
+    # Diagnostic overfitting : on compare l'AUC sur le train et sur le test
+    train_auc = roc_auc_score(y_train, best_pipeline.predict_proba(X_train)[:, 1])
+    test_auc = roc_auc_score(y_test, y_proba)
+    cv_auc_scores = [
+        roc_auc_score(y_train.iloc[val_idx], best_pipeline.predict_proba(X_train.iloc[val_idx])[:, 1])
+        for _, val_idx in cv.split(X_train, y_train)
+    ]
+    print(f"AUC train : {train_auc:.3f} | AUC test : {test_auc:.3f} | écart : {train_auc - test_auc:+.3f}")
+    print(f"AUC en CV (5 folds, sur le train) : {np.mean(cv_auc_scores):.3f} ± {np.std(cv_auc_scores):.3f}")
+    if train_auc - test_auc > 0.05:
+        print("=> Écart train/test notable : signe classique de sur-apprentissage.")
+    else:
+        print("=> Écart train/test faible : l'AUC très élevé ne vient donc pas d'un sur-apprentissage "
+              "classique (le modèle ne mémorise pas le train), mais plutôt du fait que ce jeu de "
+              "données (sondage volontaire, pas de diagnostic clinique) sépare les deux classes de "
+              "façon très nette. À interpréter avec prudence : voir la section Limites du README.")
+
+    # courbe d'apprentissage
+    train_sizes, train_scores, test_scores = learning_curve(
+        best_pipeline, X_train, y_train, cv=cv, scoring='roc_auc',
+        train_sizes=np.linspace(0.2, 1.0, 6), random_state=42)
+    plt.figure()
+    plt.plot(train_sizes, train_scores.mean(axis=1), 'o-', label='AUC train')
+    plt.plot(train_sizes, test_scores.mean(axis=1), 'o-', label='AUC validation (CV)')
+    plt.xlabel("Taille du jeu d'entraînement")
+    plt.ylabel("AUC")
+    plt.title(f"Courbe d'apprentissage : {label}")
+    plt.legend(loc="lower right")
+    plt.ylim(0, 1.05)
+    plt.show()
 
     # matrice de confusion
     conf_matrix = confusion_matrix(y_test, y_pred)
@@ -96,6 +133,12 @@ def logistic_regression(df, label):
     joblib.dump(best_pipeline, f'models/lr_{label}.joblib')
     print(f"Sauvegarde sous : models/lr_{label}.joblib")
 
+    return {
+        "label": label, "train_auc": train_auc, "test_auc": test_auc,
+        "cv_auc_mean": np.mean(cv_auc_scores), "cv_auc_std": np.std(cv_auc_scores),
+        "classification_report": classification_report(y_test, y_pred, output_dict=True),
+    }
 
-logistic_regression(df_students, "students")
-logistic_regression(df_employee, "employee")
+
+results_students = logistic_regression(df_students, "students")
+results_employee = logistic_regression(df_employee, "employee")

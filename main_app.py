@@ -12,6 +12,7 @@ if profil == "Étudiant":
     
     age = st.slider("Quel est ton âge ?", 15, 35)
     academic_pressure = st.slider("Pression académique (1=faible, 5=élevée)", 1, 5)
+    cgpa = st.slider("Ton CGPA (moyenne générale sur 10)", 0.0, 10.0, 7.5, step=0.01)
     study_satisfaction = st.slider("Satisfaction de tes études (1=faible, 5=élevée)", 1, 5)
     dietary = st.selectbox("Habitudes alimentaires", ["Mauvaises", "Moderées", "Bonnes"])
     dietary = {"Mauvaises": 0, "Moderées": 1, "Bonnes": 2}[dietary]
@@ -21,16 +22,14 @@ if profil == "Étudiant":
     suicidal_thoughts = 1 if suicidal_thoughts == "Oui" else 0
     work_hours = st.slider("Combien d'heures travailles-tu par jour ?", 0, 12)
     financial_stress = st.slider("Stress financier (1=faible, 5=élevé)", 1, 5)
-    family_history = st.selectbox("Antécédents familiaux de maladie mentale ?", ["Non", "Oui"])
-    family_history = 1 if family_history == "Oui" else 0
-    
-    
-    data = pd.DataFrame([[age, academic_pressure, study_satisfaction, dietary, degree, suicidal_thoughts,
-                     work_hours, financial_stress, family_history]],
-                    columns=['Age', 'Academic Pressure', 'Study Satisfaction',
+
+
+    data = pd.DataFrame([[age, academic_pressure, cgpa, study_satisfaction, dietary, degree, suicidal_thoughts,
+                     work_hours, financial_stress]],
+                    columns=['Age', 'Academic Pressure', 'CGPA', 'Study Satisfaction',
                              'Dietary Habits', 'Degree',
                              'Have you ever had suicidal thoughts ?', 'Work/Study Hours',
-                             'Financial Stress', 'Family History of Mental Illness'])
+                             'Financial Stress'])
     
 
 else:
