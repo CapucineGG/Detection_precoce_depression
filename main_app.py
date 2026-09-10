@@ -4,6 +4,13 @@ import pandas as pd
 
 st.title("Détection précoce de la dépression")
 
+st.warning(
+    "Cet outil est un projet pédagogique de Machine Learning, entraîné sur un sondage en ligne "
+    "déclaratif, ce n'est pas un diagnostic clinique et ça ne remplace pas l'avis d'un "
+    "professionnel de santé. Si tu penses être concerné·e, parles-en à un médecin ou à un "
+    "professionnel de santé mentale."
+)
+
 profil = st.selectbox("Tu es :", ["Étudiant", "Employé"])
 
 if profil == "Étudiant":
@@ -69,3 +76,8 @@ if st.button("Prédire"):
         st.error(f"Risque de dépression détecté : {proba*100:.1f}%")
     else:
         st.success(f"Pas de risque détecté : {proba*100:.1f}%")
+
+    st.caption(
+        "Résultat indicatif produit par un modèle statistique, pas un diagnostic médical. "
+        "En cas de doute, consulte un professionnel de santé."
+    )
